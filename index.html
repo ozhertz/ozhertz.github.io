@@ -2380,6 +2380,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
   // The live screen (everything in .tvface) is mapped onto that TV with a CSS perspective transform.
   const tvface = document.getElementById('tvface'), cTV = document.getElementById('tvScene'), xTV = cTV.getContext('2d');
   const cTF = document.getElementById('tvFront'), xTF = cTF.getContext('2d');
+  let HD = 1;                                         // HOME canvases' pixel ratio (see drawHome)
   const HOME = { active: false, dir: 0, t0: 0, u: 0, u0: 0, hover: -1, on: [0, 0, 0, 0] };
   const IMG_W = 1678, IMG_H = 937, CAM_D = 7, OVERSCAN = 1.025;
   const LAYERS = [                                   // back → front: plane depth, which canvas (all in the 1678×937 picture frame)
@@ -2611,7 +2612,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     X.drawImage(t.glass, 0, 0);
     if (on > 0) {                                     // switching on: the picture fades in over the dark glass
       X.globalAlpha = clamp01(on / 0.12) * fa;
-      drawScreen(X, t, drawSetScreen(i, on), 320, 240, { bulge: 0.06, vign: 0.25, glass: 0.4, res: Math.min(1, f.k * dpr * 1.1) });
+      drawScreen(X, t, drawSetScreen(i, on), 320, 240, { bulge: 0.06, vign: 0.25, glass: 0.4, res: Math.min(1, f.k * HD * 1.1) });
       X.globalAlpha = fa;
     }
     X.drawImage(t.f, 0, 0);
@@ -2752,10 +2753,11 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
         const c0 = hash(Math.round(x * 3.1), seed) * 0.45, k = clamp01((q - c0) / 0.5);
         if (k > 0.85 && hash(i, tick) > 0.4) return;
         out([x, y + k * k * (box.y1 - wb.y0 + (wb.y1 - wb.y0)) * 1.3]);
-      } else {                                         // scanOff: a scan line runs down the word and rubs it out behind it, a bright row on the line
-        const yS = wb.y0 + (wb.y1 - wb.y0 + grid.g * 2) * clamp01(q / 0.8) - grid.g;
-        if (y < yS - grid.g * 0.5) return;
-        out([x, y], y < yS + grid.g * 1.5 ? 1.8 : 1);
+      } else {                                         // scanOff: the beam steps down the word; above it gone, on it the dots flicker bright
+        const yS = wb.y0 + (wb.y1 - wb.y0 + grid.g * 4) * clamp01(q / 0.8) - grid.g * 2;
+        if (y < yS - grid.g * 2) return;
+        if (y < yS + grid.g) { if (hash(i, tick) > 0.5) out([x, y], 1.8); return; }
+        out([x, y]);
       }
     });
   }
@@ -2769,11 +2771,12 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     for (const d of dots) { const [hx, hy] = LH.at(d.g), S = LV.size; const P = toS(bulge(hx + d.u * S, hy + d.v * S)); tgt.push([P[0], P[1], SZ * ks]); }
     for (const d of textDots) { const P = toS(bulge(d.x, d.y)); tgt.push([P[0], P[1], SZ * ks * 0.75]); }
     const B = st.bright;
-    if (mode === 'scanOff') {
-      const yS = snapY(top + (bot - top) * clamp01(q / 0.8)), band = g * 1.5;
-      for (const [x, y] of menuPts) if (y > yS + band) dot(x, y, dS, B); else if (y > yS - g * 0.5) dot(x, y, dS, Math.min(1, B * 1.8));
-      for (const [x, y, s] of tgt) if (y < yS) dot(x, y, s, Math.min(1, B * (y > yS - band * 2 ? 1.8 : 1)));
-      if (q < 0.8) for (let x = a0[0] + g; x < b0[0]; x += g * 2) dot(x, yS, SZ * ks * 0.5, 0.25);   // the line itself, faint
+    if (mode === 'scanOff') {                          // the beam jumps down in steps; under it a strip of static where old and new dots flicker
+      const yS = snapY(top + (bot - top) * clamp01(q / 0.8)), band = g * 3;
+      menuPts.forEach(([x, y], i) => { if (y > yS + g) dot(x, y, dS, B); else if (y > yS - band && hash(i, tick) > 0.5) dot(x, y, dS, Math.min(1, B * 1.8)); });
+      tgt.forEach(([x, y, s], i) => { if (y < yS - band) dot(x, y, s, B); else if (y < yS + g && hash(i + 7.3, tick) > 0.45) dot(x, y, s, Math.min(1, B * 1.8)); });
+      if (q < 0.8) for (let x = a0[0] + g / 2; x < b0[0]; x += g) for (let r = 0; r < 2; r++) {   // the beam: two rows of static on the dot grid
+        const h = hash(Math.round((x - a0[0]) / g) * 3 + r, tick); if (h > 0.55) dot(x, yS + r * g, SZ * ks * 0.6, 0.3 + 0.5 * h); }
       return;
     }
     // drain: MENU pours out first (columns letting go one after another)
@@ -2794,7 +2797,8 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     const dt = Math.min(0.25, Math.max(0, T - flyLast)); flyLast = T;   // slow frames still keep time
     if (HOME.dir > 0 && !HOME.wait) { if (!HOME.flyP || !FLYP) buildFly(); HOME.flyP = Math.min(FLY.END, HOME.flyP + dt); }   // from the moment the camera starts to pull back
     const backMode = HOME.dir < 0 ? (HOME.backMode || 'rev') : 'rev';
-    const backQ = HOME.dir < 0 ? clamp01((T - HOME.t0) / (homeDur() * 0.7 * 0.8)) : 0;   // other ways back: done a little before the zoom in ends
+    const backTick = HOME.dir < 0 ? Math.floor((T - HOME.t0) * 14) : 0;          // going back is digital too: 14 steps a second
+    const backQ = HOME.dir < 0 ? clamp01(backTick / 14 / (homeDur() * 0.7 * 0.8)) : 0;   // other ways back: done a little before the zoom in ends
     if (HOME.dir < 0 && backMode === 'rev') HOME.flyP = Math.max(0, HOME.flyP - dt * 2);
     const p = HOME.flyP; homeHideMenu = p > 0 && !(backMode !== 'rev' && backQ >= 0.85);
     for (let i = 0; i < 3; i++) HOME.lab[i + 1] = clamp01((p - FLY.LAND[i]) / 0.2);
@@ -2827,9 +2831,9 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     const mBox = (() => { const a = toS([W * 0.2, H * 0.25]), b = toS([W * 0.8, H * 0.75]); return { x0: a[0], y0: a[1], x1: b[0], y1: b[1] }; })(), mGrid = { g: DOT_GAP * ks, ox: c0[0].x, oy: c0[0].y };
     if (backMode !== 'rev' && HOME.dir < 0) {          // going back without rewinding: each word goes off its own way, then the page's menu is back
       words.forEach((wd, g) => { if (!wd) return; const tl = setScreenPt(wd.t, 30, 30), bl = setScreenPt(wd.t, 290, 210);
-        wordOff(backMode, wd.pts, clamp01(backQ * 1.15 - g * 0.05), boxOf(wd.pts), { x0: tl[0], y0: tl[1], x1: bl[0], y1: bl[1] }, { g: pitch, ox: 0, oy: 0 }, tick, 11 + g * 7, (x, y, a, k) => dot(x, y, dS * k, Math.min(1, st.bright * a))); });
-      if (backMode === 'scanOff' || backMode === 'drain') pageBack(backMode, menuPts, backQ, tick, st, dS, ks, toS, dot, SZ);
-      else wordOff(backMode, menuPts, backQ, boxOf(menuPts), mBox, { g: pitch, ox: 0, oy: 0 }, tick, 5, (x, y, a, k) => dot(x, y, dS * k, Math.min(1, st.bright * a)));
+        wordOff(backMode, wd.pts, clamp01(backQ * 1.15 - g * 0.05), boxOf(wd.pts), { x0: tl[0], y0: tl[1], x1: bl[0], y1: bl[1] }, { g: pitch, ox: 0, oy: 0 }, backTick, 11 + g * 7, (x, y, a, k) => dot(x, y, dS * k, Math.min(1, st.bright * a))); });
+      if (backMode === 'scanOff' || backMode === 'drain') pageBack(backMode, menuPts, backQ, backTick, st, dS, ks, toS, dot, SZ);
+      else wordOff(backMode, menuPts, backQ, boxOf(menuPts), mBox, { g: pitch, ox: 0, oy: 0 }, backTick, 5, (x, y, a, k) => dot(x, y, dS * k, Math.min(1, st.bright * a)));
       Y.restore(); return;
     }
     FLYP.logo.forEach((parts, g) => {
@@ -2871,11 +2875,14 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
   function drawHome(T, u) {
     // the stage can change size while HOME is up (the window, the page settling right after it opens): keep both canvases
     // at the stage's size, or the new frame lands in one corner of the old one and the rest of the old frame stays
-    for (const c of [cTV, cTF]) { const w = Math.round(W * dpr), h = Math.round(H * dpr); if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } }
+    // while the camera moves (to HOME and back) the scene is drawn at 60 % resolution — it is in motion and behind glass, and
+    // it is most of the work then; at rest it goes back to full. HD is the HOME canvases' pixel ratio
+    HD = dpr * (HOME.dir < 0 || u < 0.995 ? 0.6 : 1);
+    for (const c of [cTV, cTF]) { const w = Math.round(W * HD), h = Math.round(H * HD); if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } }
     setPageShape(u);
     const cam = camAtU(u); swayCam(cam, T, u);
     // behind the live screen: room, the TV wall, what's on the lit screens, the page TV
-    const X = xTV; X.setTransform(dpr, 0, 0, dpr, 0, 0); X.fillStyle = '#05070a'; X.fillRect(0, 0, W, H);
+    const X = xTV; X.setTransform(HD, 0, 0, HD, 0, 0); X.fillStyle = '#05070a'; X.fillRect(0, 0, W, H);
     for (const L of LAYERS) if (!L.front) drawPlane(X, cam, L);
     screenQuads.length = 0; glows.length = 0;
     for (const t of SETS) if (t.ord < PAGE_ORD) drawSet(X, cam, t);   // the sets behind the page TV
@@ -2905,7 +2912,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
       let pts = ''; for (let i = 0; i < OPEN_POLY.length; i += 2) pts += (i ? ',' : '') + (L + OPEN_POLY[i] * kx).toFixed(1) + 'px ' + (T + OPEN_POLY[i + 1] * ky).toFixed(1) + 'px';
       tvface.style.clipPath = u <= 1e-4 ? '' : `polygon(${pts})`; }
     // in front of it: the page TV's glass glare, then glass, facade, ivy
-    const Y = xTF; Y.setTransform(dpr, 0, 0, dpr, 0, 0); Y.clearRect(0, 0, W, H);
+    const Y = xTF; Y.setTransform(HD, 0, 0, HD, 0, 0); Y.clearRect(0, 0, W, H);
     if (bezelReady) {                                 // the page TV over the live screen: the screen shows only through its cut-out glass,
       const f = tvXform(cam, PAGE);                   // the same hole as the main-screen frame, so the edge never changes
       if (f) { Y.save(); Y.imageSmoothingQuality = 'high'; Y.transform(f.k * PAGE.sx, 0, 0, f.k, f.ox, f.oy); Y.drawImage(BEZEL, 0, 0); Y.restore(); }
