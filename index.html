@@ -194,6 +194,15 @@ h1 { margin: 2px 0 0; font-size: clamp(18px, 2.4vw, 22px); font-weight: 600; let
 .fs svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 calc(3px * var(--k, 1)) rgba(200,220,255,.7)); }
 .fs .in { display: none; } .fs[aria-pressed="true"] .out { display: none; } .fs[aria-pressed="true"] .in { display: inline; }
 .fs[hidden] { display: none; }
+.rotateHint { display: none; margin: 14px 0 0; justify-content: center; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; color: #8f9bb3; }
+.rotateHint svg { color: #cfe0ff; filter: drop-shadow(0 0 3px rgba(200,220,255,.6)); }
+@media (pointer: coarse) and (orientation: portrait) { .rotateHint { display: flex; } }
+.fs.dotted svg { opacity: 0; }   /* on the menu the icon is drawn on the screen as dots (buildText), the button is only its hit area */
+.fs.dotted { opacity: 1; }
+.fs.placed:not(.dotted) { opacity: 0; pointer-events: none; }   /* placed on the screen but its dots are not lit (opening, other pages): hidden and inert */
+.fs.dotted:focus-visible { outline: 1px solid rgba(207,224,255,.6); outline-offset: 2px; }
+@media (pointer: coarse) { .fs::before { inset: -14px; } .term-back::before { inset: -26px -40px -26px -40px; } }   /* fingers: bigger hit areas
+
 .stage.homing .fs { pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .power, .power.off { animation: none; } }
 .stage.is-off { cursor: pointer; }
@@ -252,6 +261,8 @@ html,body{margin:0}
 body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;overflow-x:hidden}
 .wrap{width:100%;max-width:none;gap:0;margin:auto 0}
 .stage{border-radius:0}
+/* a phone on its side: fit the whole 16:9 screen in the height (no scrolling), black at the sides */
+@media (pointer:coarse) and (orientation:landscape){.wrap{width:min(100%,calc(100vh*16/9));width:min(100%,calc(100dvh*16/9));margin:auto}}
 </style>
 <div class="wrap">
   <header>
@@ -380,6 +391,8 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     <div class="toast" id="toast" role="status"></div>
     <div class="homeEditLayer" id="homeEditLayer" hidden><span>끌기: 이동 · 휠: 확대/축소 · 다 맞추면 버튼을 다시 눌러 끄기</span></div>
   </div>
+  <!-- phones held upright: the 16:9 screen is small, so a hint to turn the phone (only there) -->
+  <p class="rotateHint" aria-hidden="true"><svg viewBox="0 0 22 14" width="22" height="14" fill="currentColor"><rect x="0" y="2" width="2" height="2"/><rect x="0" y="5" width="2" height="2"/><rect x="0" y="8" width="2" height="2"/><rect x="3" y="11" width="2" height="2"/><rect x="6" y="11" width="2" height="2"/><rect x="9" y="11" width="2" height="2"/><rect x="12" y="11" width="2" height="2"/><rect x="15" y="11" width="2" height="2"/><rect x="18" y="8" width="2" height="2"/><rect x="18" y="5" width="2" height="2"/><rect x="18" y="2" width="2" height="2"/><rect x="3" y="0" width="2" height="2"/><rect x="6" y="0" width="2" height="2"/><rect x="9" y="0" width="2" height="2"/><rect x="12" y="0" width="2" height="2"/><rect x="15" y="0" width="2" height="2"/></svg>가로로 돌리면 크게 볼 수 있어요</p>
 
   <!-- settings, in the order things happen on screen: playback + presets on top, then one folded group per stage -->
   <div class="settings" id="settings">
@@ -757,6 +770,9 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     '2': ['01110','10001','00001','00010','00100','01000','11111'],
     '3': ['11110','00001','00001','01110','00001','00001','11110'],
   };
+  // the fullscreen icon, drawn on the menu screen with the names (7 × 7): four corners out, or pointing in while fullscreen
+  const FS_OUT = ['11...11', '1.....1', '.......', '.......', '.......', '1.....1', '11...11'];
+  const FS_IN = ['.1...1.', '11...11', '.......', '.......', '.......', '11...11', '.1...1.'];
   function dmText(text, k, anchorX, midY, align, grp, order, SP = 2) {
     // a space is narrower than a letter (2 columns, not 5), so "THE END" reads as one name
     const adv = ch => ch === ' ' ? 2 : 5, offs = []; let fw = 0;
@@ -791,6 +807,20 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
       Object.assign(items[i].style, { left: l + 'px', top: t + 'px', width: (r - l) + 'px', height: (b - t) + 'px' });
       LABEL_BOX[i] = box;
     });
+    // the fullscreen icon: top right of the picture, inside the glass, so the screen's bulge, glow and flicker work on it too
+    const fsB = document.getElementById('fsBtn');
+    if (fsB && !fsB.hidden) {
+      const k = Math.max(1, Math.round(TXT.k / 2)), P = DOT_GAP, size = 7 * k * P;
+      const left = Math.round((W * 0.95 - size) / P) * P, top = Math.round(H * 0.08 / P) * P;
+      const pat = (document.fullscreenElement || document.webkitFullscreenElement) ? FS_IN : FS_OUT;
+      for (let fy = 0; fy < 7; fy++) for (let fx = 0; fx < 7; fx++) if (pat[fy][fx] === '1')
+        for (let j = 0; j < k; j++) for (let i = 0; i < k; i++)
+          textDots.push({ x: left + (fx * k + i + 0.5) * P, y: top + (fy * k + j + 0.5) * P, grp: -1, order: 3, fs: true,
+                          row: (fy * k + j) / (7 * k), col: (fx * k + i) / (7 * k), r: Math.random(), seed: rand(0, 1000) });
+      const [cx, cy] = bulge(left + size / 2, top + size / 2), pad = P * 3;
+      fsB.classList.add('placed');
+      Object.assign(fsB.style, { left: (cx - size / 2 - pad) + 'px', top: (cy - size / 2 - pad) + 'px', right: 'auto', width: (size + pad * 2) + 'px', height: (size + pad * 2) + 'px' });
+    }
   }
 
   function build() {
@@ -1107,6 +1137,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     }
     // menu names, lit as dots too: each name scans on top to bottom after its shape lands
     const textSettled = smooth(clamp01((t - TL.labels - 1.4) / 1.2));
+    const fsEl = document.getElementById('fsBtn'), fsHot = fsEl && fsEl.matches(':hover, :focus-visible'); let fsDrawn = false;
     for (const d of textDots) {
       if (hideMenu || homeHideMenu) break;
       const ig = TL.labels + (d.order < 0 ? -0.15 : d.order * 0.16) + d.row * 0.45 + d.col * 0.12 + d.r * 0.05;
@@ -1114,7 +1145,8 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
       if (L.a <= 0.01) continue;
       const tubeV = d.grp < 0 ? neon(3, T) : tube[d.grp];
       const gl = glitchAt(d.grp, 20 + Math.floor(d.row * 5), t);
-      let a = L.a * (1 - textSettled * (1 - tubeV)) * (d.grp < 0 ? 0.38 : 1) * (gl ? gl.dim : 1);
+      let a = L.a * (1 - textSettled * (1 - tubeV)) * (d.fs ? (fsHot ? 1 : 0.5) : d.grp < 0 ? 0.38 : 1) * (gl ? gl.dim : 1);
+      if (d.fs && a > 0.05) fsDrawn = true;
       const I = interact(mode, d.x, d.y, 200 + d.grp * 13 + Math.floor(d.row * 5), live, mtick);
       a *= I.a;
       if (d.grp >= 0) a = Math.min(1, a * (1 + hover[d.grp] * 0.4));
@@ -1125,6 +1157,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
       xDots.fillStyle = `rgba(255,${L.g | 0},${L.b | 0},${a.toFixed(3)})`;
       xDots.fillRect(x - sz / 2, y - sz / 2, sz, sz);
     }
+    if (fsEl) fsEl.classList.toggle('dotted', fsDrawn);
     if (floodP) drawFlood(floodP.p, floodP.w, floodP.cu || 0);
     updateGlow();
     // horizontal streaks: sharp, hair-thin lines of light bouncing off the glass at the height of the
@@ -2188,10 +2221,13 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     const btn = document.getElementById('fsBtn'), de = document.documentElement;
     const on = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
     if (!(document.fullscreenEnabled || document.webkitFullscreenEnabled)) { btn.hidden = true; return; }
-    const sync = () => { btn.setAttribute('aria-pressed', on()); btn.setAttribute('aria-label', on() ? '전체 화면 끄기' : '전체 화면'); btn.title = on() ? '전체 화면 끄기 (Esc)' : '전체 화면 (F11과 같음)'; };
+    const sync = () => { try { buildText(); } catch (e) {} if (!on()) try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch (e) {} btn.setAttribute('aria-pressed', on()); btn.setAttribute('aria-label', on() ? '전체 화면 끄기' : '전체 화면'); btn.title = on() ? '전체 화면 끄기 (Esc)' : '전체 화면 (F11과 같음)'; };
     btn.addEventListener('click', e => { e.stopPropagation();
       if (on()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-      else { const r = (de.requestFullscreen || de.webkitRequestFullscreen).call(de, { navigationUI: 'hide' }); r && r.catch && r.catch(() => {}); } });
+      else { const r = (de.requestFullscreen || de.webkitRequestFullscreen).call(de, { navigationUI: 'hide' });
+        // on a phone, fullscreen also turns the picture sideways where the browser allows it (Android Chrome; iPhone has no web fullscreen)
+        const turn = () => { if (matchMedia('(pointer: coarse)').matches && screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); };
+        r && r.then ? r.then(turn, () => {}) : turn(); } });
     document.addEventListener('fullscreenchange', sync); document.addEventListener('webkitfullscreenchange', sync); sync();
   })();
   const powerBtn = document.getElementById('power'), POWER_OFF = 0.45;
@@ -2679,7 +2715,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
   function buildFly() {
     const k = htSet().font, shapes = [[], [], []]; for (const d of dots) shapes[d.g].push(d);
     FLYP = { logo: shapes.map((L, g) => { L.sort((a, b) => a.u - b.u || a.v - b.v); return pairUp(L, wordGrid(CATS[g].label, k).pts.length); }),
-      menu: pairUp(textDots.slice().sort((a, b) => a.x - b.x || a.y - b.y).map(d => bulge(d.x, d.y)), wordGrid('MENU', k).pts.length),
+      menu: pairUp(textDots.filter(d => !d.fs).sort((a, b) => a.x - b.x || a.y - b.y).map(d => bulge(d.x, d.y)), wordGrid('MENU', k).pts.length),
       // "random": the four ways shuffled each time HOME opens, so 3D · 2D · ETC · MENU each get a different one
       modes: (() => { const m = ['scan', 'rain', 'swirl', 'line']; for (let i = m.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [m[i], m[j]] = [m[j], m[i]]; } return m; })() };
   }
@@ -2771,7 +2807,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     const g = DOT_GAP * ks, a0 = toS([0, 0]), b0 = toS([W, H]), top = a0[1], bot = b0[1], snapY = y => a0[1] + Math.round((y - a0[1]) / g) * g;
     const tgt = [];
     for (const d of dots) { const [hx, hy] = LH.at(d.g), S = LV.size; const P = toS(bulge(hx + d.u * S, hy + d.v * S)); tgt.push([P[0], P[1], SZ * ks]); }
-    for (const d of textDots) { const P = toS(bulge(d.x, d.y)); tgt.push([P[0], P[1], SZ * ks * 0.75]); }
+    for (const d of textDots) { if (d.fs) continue; const P = toS(bulge(d.x, d.y)); tgt.push([P[0], P[1], SZ * ks * 0.75]); }
     const B = st.bright;
     if (mode === 'scanOff') {                          // the beam jumps down in steps; under it a strip of static where old and new dots flicker
       const yS = snapY(top + (bot - top) * clamp01(q / 0.8)), band = g * 3;
