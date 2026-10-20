@@ -184,6 +184,15 @@ h1 { margin: 2px 0 0; font-size: clamp(18px, 2.4vw, 22px); font-weight: 600; let
 .power.off { background: #ffb15c; box-shadow: 0 0 calc(4px * var(--k, 1)) rgba(255,170,90,.8); animation: ledBreath 2.4s ease-in-out infinite; }
 @keyframes ledBlink { 0% { opacity: 1; } 55% { opacity: .18; } 70% { opacity: 1; } 85% { opacity: .18; } }
 @keyframes ledBreath { 50% { opacity: .35; } }
+/* fullscreen toggle on the bezel, top-right (mirrors the standby LED): four little dot corners, like the logo's dots */
+.fs { position: absolute; right: 1.05%; top: 1.1%; z-index: 4; width: max(14px, 1.15cqw); height: max(14px, 1.15cqw); padding: 0; border: 0; background: none;
+  color: #dfe9ff; opacity: .45; cursor: pointer; transition: opacity .2s; }
+.fs:hover, .fs:focus-visible { opacity: 1; }
+.fs::before { content: ""; position: absolute; inset: -8px; }
+.fs svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 calc(3px * var(--k, 1)) rgba(200,220,255,.7)); }
+.fs .in { display: none; } .fs[aria-pressed="true"] .out { display: none; } .fs[aria-pressed="true"] .in { display: inline; }
+.fs[hidden] { display: none; }
+.stage.homing .fs { pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .power, .power.off { animation: none; } }
 .stage.is-off { cursor: pointer; }
 
@@ -363,6 +372,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
       <button type="button" data-i="2" aria-label="엔딩 · 명함 THE END"><span class="en">THE END</span></button>
     </nav>
     <button class="power" id="power" type="button" aria-label="화면 끄기"></button>
+    <button class="fs" id="fsBtn" type="button" aria-pressed="false" aria-label="전체 화면" title="전체 화면 (F11과 같음)"><svg viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><g class="out"><rect x="0.2" y="0.2" width="1.6" height="1.6"/><rect x="2.2" y="0.2" width="1.6" height="1.6"/><rect x="0.2" y="2.2" width="1.6" height="1.6"/><rect x="12.2" y="0.2" width="1.6" height="1.6"/><rect x="10.2" y="0.2" width="1.6" height="1.6"/><rect x="12.2" y="2.2" width="1.6" height="1.6"/><rect x="0.2" y="12.2" width="1.6" height="1.6"/><rect x="0.2" y="10.2" width="1.6" height="1.6"/><rect x="2.2" y="12.2" width="1.6" height="1.6"/><rect x="12.2" y="12.2" width="1.6" height="1.6"/><rect x="10.2" y="12.2" width="1.6" height="1.6"/><rect x="12.2" y="10.2" width="1.6" height="1.6"/></g><g class="in"><rect x="4.2" y="0.2" width="1.6" height="1.6"/><rect x="4.2" y="2.2" width="1.6" height="1.6"/><rect x="2.2" y="4.2" width="1.6" height="1.6"/><rect x="0.2" y="4.2" width="1.6" height="1.6"/><rect x="8.2" y="0.2" width="1.6" height="1.6"/><rect x="8.2" y="2.2" width="1.6" height="1.6"/><rect x="10.2" y="4.2" width="1.6" height="1.6"/><rect x="12.2" y="4.2" width="1.6" height="1.6"/><rect x="0.2" y="8.2" width="1.6" height="1.6"/><rect x="2.2" y="8.2" width="1.6" height="1.6"/><rect x="4.2" y="10.2" width="1.6" height="1.6"/><rect x="4.2" y="12.2" width="1.6" height="1.6"/><rect x="12.2" y="8.2" width="1.6" height="1.6"/><rect x="10.2" y="8.2" width="1.6" height="1.6"/><rect x="8.2" y="10.2" width="1.6" height="1.6"/><rect x="8.2" y="12.2" width="1.6" height="1.6"/></g></svg></button>
     </div>
     <canvas id="tvFront" aria-hidden="true"></canvas>
     <div class="toast" id="toast" role="status"></div>
@@ -559,6 +569,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
   const REF_W = 1200; let DOT_SIZE = 0.60, DOT_GAP = 5, K = 1;
 
   const stage = document.getElementById('stage');
+  const RENDER_BUDGET = 1700 * 950;   // max canvas backing pixels (see layout)
   const cRip = document.getElementById('ripplefx'), xRip = cRip.getContext('2d');
   const cLines = document.getElementById('lines'), cRefl = document.getElementById('refl'), cRefl2 = document.getElementById('refl2'), cStreak = document.getElementById('streak'), xStreak = cStreak.getContext('2d');
   const smear = document.createElement('canvas'), xSmear = smear.getContext('2d'), smear2 = document.createElement('canvas'), xSmear2 = smear2.getContext('2d');
@@ -660,7 +671,10 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
 
   function layout() {
     const r = stage.getBoundingClientRect();
-    dpr = Math.min(window.devicePixelRatio || 1, QUALITY >= 1 ? 1 : 2); W = r.width; H = r.height;
+    // pixel budget: past ~1700×950 backing pixels the canvases render a little lower and the browser scales them up,
+    // so a full-width or fullscreen stage costs about what the 1200 px preview does (the glass blur hides the softening)
+    W = r.width; H = r.height;
+    dpr = Math.min(window.devicePixelRatio || 1, QUALITY >= 1 ? 1 : 2, Math.sqrt(RENDER_BUDGET / Math.max(1, W * H)));
     DOT_GAP = +(document.getElementById('dotGap')?.value || 5) * W / REF_W; DOT_SIZE = +(document.getElementById('dotSize')?.value || 60) / 100; K = W / REF_W; stage.style.setProperty('--k', K.toFixed(4));   // blurs and glows scale with the stage too
     for (const c of [cDots, cGlow, cHalo, cLines, cRefl, cRefl2, cStreak, cRip, cTerm]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
     smear.width = 1; smear.height = Math.round(H * dpr); smear2.width = 5; smear2.height = Math.round(H * dpr); 
@@ -2161,6 +2175,17 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
   }
 
   // ---------- power: the LED switches the set off (CRT collapse); any click on the dark screen starts it again ----------
+  // fullscreen: the whole page goes fullscreen like F11 (the stage then spans the screen); hidden where the browser forbids it
+  (function () {
+    const btn = document.getElementById('fsBtn'), de = document.documentElement;
+    const on = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+    if (!(document.fullscreenEnabled || document.webkitFullscreenEnabled)) { btn.hidden = true; return; }
+    const sync = () => { btn.setAttribute('aria-pressed', on()); btn.setAttribute('aria-label', on() ? '전체 화면 끄기' : '전체 화면'); btn.title = on() ? '전체 화면 끄기 (Esc)' : '전체 화면 (F11과 같음)'; };
+    btn.addEventListener('click', e => { e.stopPropagation();
+      if (on()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else { const r = (de.requestFullscreen || de.webkitRequestFullscreen).call(de, { navigationUI: 'hide' }); r && r.catch && r.catch(() => {}); } });
+    document.addEventListener('fullscreenchange', sync); document.addEventListener('webkitfullscreenchange', sync); sync();
+  })();
   const powerBtn = document.getElementById('power'), POWER_OFF = 0.45;
   const powerLayers = () => [...offLayers, cTerm, toc];
   let POWER = 'on', powerT0 = 0;
