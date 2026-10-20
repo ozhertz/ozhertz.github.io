@@ -237,9 +237,9 @@ button.ctl.primary { background: var(--ink); color: var(--room); border-color: v
 
 <style>/* public build */
 #settings,#homeEditLayer,.wrap>header,.note,.lockhint{display:none!important}
-html,body{height:100%;margin:0}
-body{padding:0;display:grid;place-items:center;min-height:100vh;min-height:100dvh;overflow:hidden}
-.wrap{width:min(100vw,calc(100vh*16/9));width:min(100vw,calc(100dvh*16/9));max-width:none;gap:0}
+html,body{margin:0}
+body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;overflow-x:hidden}
+.wrap{width:100%;max-width:none;gap:0;margin:auto 0}
 .stage{border-radius:0}
 </style>
 <div class="wrap">
