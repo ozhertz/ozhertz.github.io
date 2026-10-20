@@ -546,6 +546,12 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     <label for="htSize">도트 크기 (간격 대비) <output id="oHtSize">64%</output><input id="htSize" type="range" min="30" max="100" step="1" value="64"></label>
     <label for="htBright">도트 밝기 <output id="oHtBright">90%</output><input id="htBright" type="range" min="20" max="100" step="1" value="90"></label>
     <label for="htGlow">빛 번짐 <output id="oHtGlow">25%</output><input id="htGlow" type="range" min="0" max="100" step="1" value="25"></label>
+    <label for="htMorph">HOME 갈 때 도트 재배열 <select id="htMorph">
+        <option value="scatter" selected>흩어졌다 모이기 (지금)</option><option value="scan">주사선 — 위 줄부터 한 줄씩</option><option value="rain">비 — 위로 올라갔다 열마다 떨어짐</option><option value="mosaic">모자이크 — 굵은 칸에서 점점 촘촘하게</option><option value="dissolve">깜빡 교체 — 제자리에서 꺼지고 켜짐</option><option value="line">가로 한 줄로 모였다 위아래로 펼침</option><option value="swirl">소용돌이 — 글자 가운데를 돌며</option>
+        </select></label>
+    <label for="htBack">목차로 돌아갈 때 <select id="htBack">
+        <option value="rev" selected>되감기 2배 (지금)</option><option value="off">TV 꺼지듯 — 가로줄로 접혀 점 하나</option><option value="shatter">깨져 흩어지기</option><option value="drain">아래로 쏟아지기</option><option value="scanOff">주사선 — 위 줄부터 지워짐</option>
+        </select></label>
     <div style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
       <button class="ctl" id="homeEdit" type="button" aria-pressed="false">HOME에서 끌어서 시점 맞추기</button>
       <button class="ctl" id="homeViewReset" type="button">처음 시점으로</button>
@@ -602,12 +608,12 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
       const i = Math.max(0, Math.min(sel.options.length - 1, sel.selectedIndex + step)); if (i === sel.selectedIndex) return;
       sel.selectedIndex = i; sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true }));
     }, { passive: false }); }
-  const SETTING_IDS = ['bandAmt', 'camFollowX', 'camFollowY', 'typeBase', 'typeMode', 'typeSecDur', 'typeBody', 'typeStart', 'typeStartDur', 'skipSize', 'skipFont', 'skipDot', 'homeCx', 'homeCy', 'homeW', 'tLight', 'fBlur', 'rgbAmt', 'fLen', 'fCore', 'fGlow', 'fGlowAmt', 'fCount', 'fFlick', 'fTint', 'zoomStart', 'frost', 'reflAmt', 'streakAmt', 'dome', 'mouse', 'ripple', 'rippleDots', 'pressBg', 'pressDots', 'curve', 'tScreen', 'tPower', 'tWait', 'tFrost', 'tHold', 'tMove', 'tPx', 'tBloom', 'tWarp', 'pRecede', 'pMerge', 'tAmb', 'pCurve', 'silAmt', 'pBar', 'pZoom2', 'dotGap', 'dotSize', 'pressLag', 'pressLife', 'roomAmt', 'roomBlur', 'typeAccel', 'typeBeat', 'typeHome', 'homeDur', 'homeSway', 'homeSwayAmt', 'homeSwaySpd', 'htGap', 'htFont', 'htSize', 'htBright', 'htGlow'];
+  const SETTING_IDS = ['bandAmt', 'camFollowX', 'camFollowY', 'typeBase', 'typeMode', 'typeSecDur', 'typeBody', 'typeStart', 'typeStartDur', 'skipSize', 'skipFont', 'skipDot', 'homeCx', 'homeCy', 'homeW', 'tLight', 'fBlur', 'rgbAmt', 'fLen', 'fCore', 'fGlow', 'fGlowAmt', 'fCount', 'fFlick', 'fTint', 'zoomStart', 'frost', 'reflAmt', 'streakAmt', 'dome', 'mouse', 'ripple', 'rippleDots', 'pressBg', 'pressDots', 'curve', 'tScreen', 'tPower', 'tWait', 'tFrost', 'tHold', 'tMove', 'tPx', 'tBloom', 'tWarp', 'pRecede', 'pMerge', 'tAmb', 'pCurve', 'silAmt', 'pBar', 'pZoom2', 'dotGap', 'dotSize', 'pressLag', 'pressLife', 'roomAmt', 'roomBlur', 'typeAccel', 'typeBeat', 'typeHome', 'homeDur', 'homeSway', 'homeSwayAmt', 'homeSwaySpd', 'htGap', 'htFont', 'htSize', 'htBright', 'htGlow', 'htMorph', 'htBack'];
   const STORE_KEY = 'ozhertz-opening-settings';
   function collectSettings() { const o = { v: 4 }; for (const id of SETTING_IDS) { const el = document.getElementById(id); if (el) o[id] = el.type === 'checkbox' ? el.checked : el.value; } return o; }
   function saveSettings() { try { localStorage.setItem(STORE_KEY, JSON.stringify(collectSettings())); } catch (e) {} }
   // 2026-10-20 13:26: the user's current settings (pasted from "설정 복사") are the built-in default (same on every device and on the public site)
-  const DEFAULTS = {"bandAmt":"15","camFollowX":false,"camFollowY":false,"typeBase":"20","typeMode":"sec","typeSecDur":"0.5","typeBody":"400","typeStart":"2.4","typeStartDur":"0.7","skipSize":"33","skipFont":"Galmuri9","skipDot":"71","homeCx":"845","homeCy":"430.5","homeW":"354","tLight":"0.75","fBlur":"11","rgbAmt":"69","fLen":"32","fCore":"3","fGlow":"14","fGlowAmt":"38","fCount":"3","fFlick":"60","fTint":"-35","zoomStart":"1.2","frost":"6","reflAmt":"400","streakAmt":"100","dome":"8","mouse":"combo","ripple":true,"rippleDots":true,"pressBg":"80","pressDots":"15","curve":"pull","tScreen":"0.6","tPower":"0.25","tWait":"0.4","tFrost":"2.35","tHold":"0.45","tMove":"0.9","tPx":"0.75","tBloom":"56","tWarp":"12","pRecede":"2","pMerge":"55","tAmb":"25","pCurve":"soft","silAmt":"100","pBar":"20","pZoom2":"3","dotGap":"8.25","dotSize":"64","pressLag":"0","pressLife":"1.6","roomAmt":"15","roomBlur":"3.5","typeAccel":"1","typeBeat":"0.08","typeHome":"0.15","homeDur":"1.6","homeSway":true,"homeSwayAmt":"0.4","homeSwaySpd":"6","htGap":"195","htFont":"MonoB12","htSize":"58","htBright":"85","htGlow":"45"};
+  const DEFAULTS = {"bandAmt":"15","camFollowX":false,"camFollowY":false,"typeBase":"20","typeMode":"sec","typeSecDur":"0.5","typeBody":"400","typeStart":"2.4","typeStartDur":"0.7","skipSize":"33","skipFont":"Galmuri9","skipDot":"71","homeCx":"845","homeCy":"430.5","homeW":"354","tLight":"0.75","fBlur":"11","rgbAmt":"69","fLen":"32","fCore":"3","fGlow":"14","fGlowAmt":"38","fCount":"3","fFlick":"60","fTint":"-35","zoomStart":"1.2","frost":"6","reflAmt":"400","streakAmt":"100","dome":"8","mouse":"combo","ripple":true,"rippleDots":true,"pressBg":"80","pressDots":"15","curve":"pull","tScreen":"0.6","tPower":"0.25","tWait":"0.4","tFrost":"2.35","tHold":"0.45","tMove":"0.9","tPx":"0.75","tBloom":"56","tWarp":"12","pRecede":"2","pMerge":"55","tAmb":"25","pCurve":"soft","silAmt":"100","pBar":"20","pZoom2":"3","dotGap":"8.25","dotSize":"64","pressLag":"0","pressLife":"1.6","roomAmt":"15","roomBlur":"3.5","typeAccel":"1","typeBeat":"0.08","typeHome":"0.15","homeDur":"1.6","homeSway":true,"homeSwayAmt":"0.4","homeSwaySpd":"6","htGap":"195","htFont":"MonoB12","htSize":"58","htBright":"85","htGlow":"45","htMorph":"scatter","htBack":"rev"};
   for (const [id, v] of Object.entries(DEFAULTS)) { const el = document.getElementById(id); if (!el) continue;
     if (el.type === 'checkbox') { el.checked = el.defaultChecked = !!v; }
     else if (el.tagName === 'SELECT') { for (const o of el.options) o.defaultSelected = o.value === v; el.value = v; }
@@ -2647,7 +2653,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
   }
   // the HOME words (MENU on the page, 3D · 2D · ETC on the lit sets) share one look, set in ⑤ HOME: their dots sit on a
   // grid as fine as the menu's dots on the page TV (× htGap), each letter cell is htK × htK dots, same size, light and glow
-  const htSet = () => { const v = id => +document.getElementById(id).value; return { gap: v('htGap') / 100, font: document.getElementById('htFont').value, size: v('htSize') / 100, bright: v('htBright') / 100, glow: v('htGlow') / 100 }; };
+  const htSet = () => { const v = id => +document.getElementById(id).value; return { gap: v('htGap') / 100, font: document.getElementById('htFont').value, size: v('htSize') / 100, bright: v('htBright') / 100, glow: v('htGlow') / 100, morph: document.getElementById('htMorph').value, back: document.getElementById('htBack').value }; };
   // the HOME words in dot fonts (a font with more lines = more, smaller dots for the same letter height), made by
   // tools/home/word_bitmaps.py: Galmuri (Lee Minseo, SIL OFL 1.1, https://github.com/quiple/galmuri), the X11 terminal fixed
   // fonts (public domain), GNU Unifont, and DejaVu / FreeFont / Poppins / Lora / Inter drawn small without smoothing
@@ -2674,11 +2680,90 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
   }
   const flyGlow = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'), g = x.createRadialGradient(16, 16, 1, 16, 16, 16);
     g.addColorStop(0, 'rgba(200,220,255,1)'); g.addColorStop(1, 'rgba(200,220,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return c; })();
+  // how a dot gets from where it arrives (from) to its place in the word (to), e 0 → 1; null = not drawn this step.
+  // box: the screen area it may use, wb: the word's box, grid: the dot grid it hops on ({ g, ox, oy }), seed: per word set
+  function morph(mode, from, to, e, pr, box, wb, grid, tick, seed) {
+    if (e <= 0) return from; if (e >= 1) return to;
+    const L = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], drop = q => hash(pr.r * seed, tick) > q;
+    const snap = (P, m = 1) => { const g = grid.g * m; return [grid.ox + Math.round((P[0] - grid.ox) / g) * g, grid.oy + Math.round((P[1] - grid.oy) / g) * g]; };
+    let P;
+    switch (mode) {
+      case 'scan': {                                   // the word is written a line at a time from the top; a dot waits in the shape until its line comes
+        const s0 = clamp01((to[1] - wb.y0) / Math.max(1e-6, wb.y1 - wb.y0)) * 0.6, k = clamp01((e - s0) / 0.4);
+        if (k <= 0) return from;
+        P = k < 0.4 ? [from[0], from[1] + (to[1] - from[1]) * easeInOut(k / 0.4)] : [from[0] + (to[0] - from[0]) * easeInOut((k - 0.4) / 0.6), to[1]];
+        if (k < 1 && drop(0.93)) return null; break;
+      }
+      case 'rain': {                                   // up to the top of the screen above its column, then the columns drop one after another
+        const top = [to[0], box.y0];
+        if (e < 0.35) { P = L(from, top, easeInOut(e / 0.35)); if (drop(0.85)) return null; }
+        else { const c = hash(Math.round(to[0] * 7.3), 5.1) * 0.35, k = clamp01((e - 0.35 - c) / 0.3); P = [to[0], top[1] + (to[1] - top[1]) * k * k]; }
+        break;
+      }
+      case 'mosaic': {                                 // straight there, on a grid that starts 8 dots coarse and gets finer
+        const t = easeInOut(e); return snap(L(from, to, t), 1 + Math.round(7 * (1 - t)));
+      }
+      case 'dissolve': {                               // no movement: the shape's dots go out and the word's come on, each at its own moment, flickering
+        const t1 = pr.r * 0.55, t2 = t1 + 0.12 + pr.rx * 0.3;
+        if (e < t1) return e > t1 - 0.1 && hash(pr.r * seed, tick) > 0.5 ? null : from;
+        if (e < t2) return null;
+        return e < t2 + 0.1 && hash(pr.rx * seed, tick) > 0.5 ? null : to;
+      }
+      case 'line': {                                   // all onto one line through the word's middle, then the rows open up from the middle
+        if (e < 0.45) { P = L(from, [to[0], wb.cy], easeInOut(e / 0.45)); if (drop(0.9)) return null; }
+        else { const d = Math.abs(to[1] - wb.cy) / Math.max(1e-6, (wb.y1 - wb.y0) / 2), k = clamp01((e - 0.45 - d * 0.25) / 0.3); P = [to[0], wb.cy + (to[1] - wb.cy) * easeInOut(k)]; }
+        break;
+      }
+      case 'swirl': {                                  // a turn around the word's centre, pulled in on the way
+        const a0 = Math.atan2(from[1] - wb.cy, from[0] - wb.cx), r0 = Math.hypot(from[0] - wb.cx, from[1] - wb.cy);
+        const a1 = Math.atan2(to[1] - wb.cy, to[0] - wb.cx), r1 = Math.hypot(to[0] - wb.cx, to[1] - wb.cy), t = easeInOut(e);
+        let da = a1 - a0; da = ((da % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
+        const a = a0 + (da + 2 * Math.PI) * t, r = (r0 + (r1 - r0) * t) * (1 - 0.45 * Math.sin(Math.PI * t));
+        P = [wb.cx + Math.cos(a) * r, wb.cy + Math.sin(a) * r]; if (drop(0.92)) return null; break;
+      }
+      default: {                                       // scatter: out to a random spot on the screen, then into the word
+        const mid = [box.x0 + (box.x1 - box.x0) * pr.rx, box.y0 + (box.y1 - box.y0) * pr.ry], e2 = clamp01(e * 2 - 1);
+        P = e2 > 0 ? L(mid, to, easeInOut(e2)) : L(from, mid, easeInOut(clamp01(e * 2)));
+        if (drop(0.9)) return null;
+      }
+    }
+    return snap(P);
+  }
+  const boxOf = pts => { let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (const [x, y] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } return { x0, y0, x1, y1, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 }; };
+  // leaving HOME (other than rewinding): the finished words go off on their own over the zoom back in; q 0 → 1
+  function wordOff(mode, pts, q, wb, box, grid, tick, seed, put) {
+    if (q >= 1) return;
+    const snap = P => [grid.ox + Math.round((P[0] - grid.ox) / grid.g) * grid.g, grid.oy + Math.round((P[1] - grid.oy) / grid.g) * grid.g];
+    const seen = new Set(), out = (P, a = 1, s = 1) => { const S = snap(P), key = S[0].toFixed(1) + ',' + S[1].toFixed(1); if (seen.has(key)) return; seen.add(key); put(S[0], S[1], a, s); };
+    if (mode === 'off') {                              // a set switching off: squashed to a bright line, the line to a dot, the dot fades
+      if (q < 0.4) { const k = easeInOut(q / 0.4); for (const [x, y] of pts) out([wb.cx + (x - wb.cx) * (1 + 0.15 * k), wb.cy + (y - wb.cy) * (1 - k)], 1 + 0.5 * k); }
+      else if (q < 0.65) { const k = easeInOut((q - 0.4) / 0.25); for (const [x] of pts) out([wb.cx + (x - wb.cx) * 1.15 * (1 - k), wb.cy], 1.5); }
+      else if (q < 0.9) out([wb.cx, wb.cy], 1.6 * (1 - (q - 0.65) / 0.25), 1.6);
+      return;
+    }
+    pts.forEach(([x, y], i) => {
+      if (mode === 'shatter') {                        // bits fly apart in hops and drop out, more of them each step
+        const ang = hash(i, seed) * Math.PI * 2, dist = Math.pow(q, 1.4) * (box.x1 - box.x0) * (0.2 + 0.6 * hash(i, seed + 1));
+        if (hash(i * 1.7, tick + seed) < q * 1.15) return;
+        out([x + Math.cos(ang) * dist, y + Math.sin(ang) * dist]);
+      } else if (mode === 'drain') {                   // the columns let go one after another and fall out of the bottom of the screen
+        const c0 = hash(Math.round(x * 3.1), seed) * 0.45, k = clamp01((q - c0) / 0.5);
+        if (k > 0.85 && hash(i, tick) > 0.4) return;
+        out([x, y + k * k * (box.y1 - wb.y0 + (wb.y1 - wb.y0)) * 1.3]);
+      } else {                                         // scanOff: rubbed out a line at a time from the top
+        const r = clamp01((y - wb.y0) / Math.max(1e-6, wb.y1 - wb.y0)), k = q * 1.25 - r * 0.6;
+        if (k > 0.25) return; if (k > 0 && hash(i, tick) > 0.5) return;
+        out([x, y], k > 0 ? 1.6 : 1);
+      }
+    });
+  }
   function drawHomeFly(Y, c0, T) {
     const dt = Math.min(0.25, Math.max(0, T - flyLast)); flyLast = T;   // slow frames still keep time
     if (HOME.dir > 0 && !HOME.wait) { if (!HOME.flyP || !FLYP) buildFly(); HOME.flyP = Math.min(FLY.END, HOME.flyP + dt); }   // from the moment the camera starts to pull back
-    else if (HOME.dir < 0) HOME.flyP = Math.max(0, HOME.flyP - dt * 2);
-    const p = HOME.flyP; homeHideMenu = p > 0;
+    const backMode = HOME.dir < 0 ? document.getElementById('htBack').value : 'rev';
+    const backQ = HOME.dir < 0 ? clamp01((T - HOME.t0) / (homeDur() * 0.7 * 0.8)) : 0;   // other ways back: done a little before the zoom in ends
+    if (HOME.dir < 0 && backMode === 'rev') HOME.flyP = Math.max(0, HOME.flyP - dt * 2);
+    const p = HOME.flyP; homeHideMenu = p > 0 && !(backMode !== 'rev' && backQ >= 0.85);
     for (let i = 0; i < 3; i++) HOME.lab[i + 1] = clamp01((p - FLY.LAND[i]) / 0.2);
     if (p <= 0 || !FLYP || !PAGE_CLIP || !c0.every(Boolean)) return;
     for (let i = 0; i < 4; i++) HOME.hk[i] += ((HOME.hover === i ? 1 : 0) - HOME.hk[i]) * (1 - Math.exp(-dt / 0.12));
@@ -2706,13 +2791,20 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
       return { t, sPx, pts: wg.pts.map(([x, y]) => setScreenPt(t, 160 + x * Pc, 120 + y * Pc)).sort(byXY) };
     });
     const mP = DOT_GAP * st.gap * 14 / rows, menuPts = wordGrid('MENU', st.font).pts.map(([x, y]) => toS(bulge(W / 2 + x * mP, H / 2 + y * mP))).sort(byXY);
+    const mBox = (() => { const a = toS([W * 0.2, H * 0.25]), b = toS([W * 0.8, H * 0.75]); return { x0: a[0], y0: a[1], x1: b[0], y1: b[1] }; })(), mGrid = { g: DOT_GAP * ks, ox: c0[0].x, oy: c0[0].y };
+    if (backMode !== 'rev' && HOME.dir < 0) {          // going back without rewinding: each word goes off its own way, then the page's menu is back
+      words.forEach((wd, g) => { if (!wd) return; const tl = setScreenPt(wd.t, 30, 30), bl = setScreenPt(wd.t, 290, 210);
+        wordOff(backMode, wd.pts, clamp01(backQ * 1.15 - g * 0.05), boxOf(wd.pts), { x0: tl[0], y0: tl[1], x1: bl[0], y1: bl[1] }, { g: pitch, ox: 0, oy: 0 }, tick, 11 + g * 7, (x, y, a, k) => dot(x, y, dS * k, Math.min(1, st.bright * a))); });
+      wordOff(backMode, menuPts, backQ, boxOf(menuPts), mBox, { g: pitch, ox: 0, oy: 0 }, tick, 5, (x, y, a, k) => dot(x, y, dS * k, Math.min(1, st.bright * a)));
+      Y.restore(); return;
+    }
     FLYP.logo.forEach((parts, g) => {
       const wd = words[g]; if (!wd) return;
       const t = wd.t, hot = HOME.hover === g + 1, L = lit(g + 1);
       if (HOME.lab[g + 1] >= 1) { for (const [x, y] of tear(wd.pts, hot)) dot(x, y, dS * L.s, L.a, L.g); return; }
       const tau = pq - FLY.S[g], [hx, hy] = LH.at(g), S = LV.size;
       const cS = toS(bulge(hx + S / 2, hy + S / 2)), cT = setScreenPt(t, 160, 120), sT = wd.sPx * 63 / (S * ks), gPitch = DOT_GAP * ks;
-      const tl = setScreenPt(t, 30, 30), bl = setScreenPt(t, 290, 210);
+      const tl = setScreenPt(t, 30, 30), bl = setScreenPt(t, 290, 210), wBox = { x0: tl[0], y0: tl[1], x1: bl[0], y1: bl[1] }, wB = boxOf(wd.pts);
       for (const pr of parts) {
         const d = pr.s, band = Math.floor(d.v * 11), bk = g * 31 + band, to = wd.pts[Math.floor(pr.f * wd.pts.length)];
         const delay = hash(bk, 3.7) * 0.3, dur = FLY.GO * (0.55 + hash(bk, 9.1) * 0.45);
@@ -2725,29 +2817,19 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
         x = cS[0] + Math.round((x - cS[0]) / G) * G; y = cS[1] + Math.round((y - cS[1]) / G) * G;     // on the dot grid
         let s = SZ * ks * sc, a = st.bright;
         const rr = clamp01((tau - FLY.GO - pr.r * 0.25) / (FLY.RE - 0.25));
-        if (rr > 0) {                                  // over the set's screen, the dots scatter and settle into its name, in hops too
-          const mid = [tl[0] + (bl[0] - tl[0]) * pr.rx, tl[1] + (bl[1] - tl[1]) * pr.ry];
-          const e1 = clamp01(rr * 2), e2 = clamp01(rr * 2 - 1), from = e2 > 0 ? mid : [x, y], tgt = e2 > 0 ? to : mid, e = easeInOut(e2 > 0 ? e2 : e1);
-          x = from[0] + (tgt[0] - from[0]) * e; y = from[1] + (tgt[1] - from[1]) * e;
-          if (rr < 1) { x = Math.round(x / pitch) * pitch; y = Math.round(y / pitch) * pitch; if (hash(pr.r * 97, tick) > 0.9) continue; }
-          else { x = to[0]; y = to[1]; }
-          s += (dS - s) * clamp01(rr * 1.5);
+        if (rr > 0) {                                  // over the set's screen the dots rearrange into its name, in hops too (way set in ⑤ HOME)
+          const P = morph(st.morph, [x, y], to, rr, pr, wBox, wB, { g: pitch, ox: 0, oy: 0 }, tick, 97); if (!P) continue;
+          [x, y] = P; s += (dS - s) * clamp01(rr * 1.5);
         }
         dot(x, y, s, a);
       }
     });
-    const hot = HOME.hover === 0, LM = lit(0), G0 = DOT_GAP * ks;
+    const hot = HOME.hover === 0, LM = lit(0), mWB = boxOf(menuPts);
     if (p >= FLY.MENU0 + FLY.MENU) { for (const [x, y] of tear(menuPts, hot)) dot(x, y, dS * LM.s, LM.a, LM.g); }
     else for (const pr of FLYP.menu) {
       const raw = clamp01((pq - FLY.MENU0 - pr.r * 0.3) / (FLY.MENU - 0.3)), a = toS(pr.s), b = menuPts[Math.floor(pr.f * menuPts.length)];
-      let x, y;
-      if (raw >= 1) { [x, y] = b; }
-      else {
-        const mid = toS([W * (0.2 + 0.6 * pr.rx), H * (0.25 + 0.5 * pr.ry)]), e1 = clamp01(raw * 2), e2 = clamp01(raw * 2 - 1);
-        const from = e2 > 0 ? mid : a, tgt = e2 > 0 ? b : mid, e = easeInOut(e2 > 0 ? e2 : e1);
-        x = from[0] + (tgt[0] - from[0]) * e; y = from[1] + (tgt[1] - from[1]) * e;
-        if (raw > 0) { x = c0[0].x + Math.round((x - c0[0].x) / G0) * G0; y = c0[0].y + Math.round((y - c0[0].y) / G0) * G0; if (hash(pr.r * 53, tick) > 0.9) continue; }
-      }
+      const P = morph(st.morph, a, b, raw, pr, mBox, mWB, mGrid, tick, 53); if (!P) continue;
+      const [x, y] = P;
       dot(x, y, raw >= 1 ? dS : SZ * ks * 0.7 + (dS - SZ * ks * 0.7) * raw, st.bright);
     }
     Y.restore();
