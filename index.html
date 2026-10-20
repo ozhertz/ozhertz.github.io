@@ -547,10 +547,10 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     <label for="htBright">도트 밝기 <output id="oHtBright">90%</output><input id="htBright" type="range" min="20" max="100" step="1" value="90"></label>
     <label for="htGlow">빛 번짐 <output id="oHtGlow">25%</output><input id="htGlow" type="range" min="0" max="100" step="1" value="25"></label>
     <label for="htMorph">HOME 갈 때 도트 재배열 <select id="htMorph">
-        <option value="scatter" selected>흩어졌다 모이기 (지금)</option><option value="scan">주사선 — 위 줄부터 한 줄씩</option><option value="rain">비 — 위로 올라갔다 열마다 떨어짐</option><option value="mosaic">모자이크 — 굵은 칸에서 점점 촘촘하게</option><option value="dissolve">깜빡 교체 — 제자리에서 꺼지고 켜짐</option><option value="line">가로 한 줄로 모였다 위아래로 펼침</option><option value="swirl">소용돌이 — 글자 가운데를 돌며</option>
+        <option value="random" selected>랜덤 — 주사선·비·소용돌이·가로 한 줄을 글자마다 다르게, 갈 때마다 새로</option><option value="scatter">흩어졌다 모이기 (처음 방식)</option><option value="scan">주사선 — 위 줄부터 한 줄씩</option><option value="rain">비 — 위로 올라갔다 열마다 떨어짐</option><option value="mosaic">모자이크 — 굵은 칸에서 점점 촘촘하게</option><option value="dissolve">깜빡 교체 — 제자리에서 꺼지고 켜짐</option><option value="line">가로 한 줄로 모였다 위아래로 펼침</option><option value="swirl">소용돌이 — 글자 가운데를 돌며</option>
         </select></label>
     <label for="htBack">목차로 돌아갈 때 <select id="htBack">
-        <option value="rev" selected>되감기 2배 (지금)</option><option value="off">TV 꺼지듯 — 가로줄로 접혀 점 하나</option><option value="shatter">깨져 흩어지기</option><option value="drain">아래로 쏟아지기</option><option value="scanOff">주사선 — 위 줄부터 지워짐</option>
+        <option value="random" selected>랜덤 — 처음엔 쏟아지기, 그다음부터 주사선·되감기·쏟아지기 중 하나</option><option value="rev">되감기 2배</option><option value="drain">쏟아지기 — 글자가 쏟아지고 목차가 매트릭스처럼 채워짐</option><option value="scanOff">주사선 — 위 줄부터 지우며 목차가 새로 써짐</option><option value="off">TV 꺼지듯 — 가로줄로 접혀 점 하나</option><option value="shatter">깨져 흩어지기</option>
         </select></label>
     <div style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
       <button class="ctl" id="homeEdit" type="button" aria-pressed="false">HOME에서 끌어서 시점 맞추기</button>
@@ -613,7 +613,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
   function collectSettings() { const o = { v: 4 }; for (const id of SETTING_IDS) { const el = document.getElementById(id); if (el) o[id] = el.type === 'checkbox' ? el.checked : el.value; } return o; }
   function saveSettings() { try { localStorage.setItem(STORE_KEY, JSON.stringify(collectSettings())); } catch (e) {} }
   // 2026-10-20 13:26: the user's current settings (pasted from "설정 복사") are the built-in default (same on every device and on the public site)
-  const DEFAULTS = {"bandAmt":"15","camFollowX":false,"camFollowY":false,"typeBase":"20","typeMode":"sec","typeSecDur":"0.5","typeBody":"400","typeStart":"2.4","typeStartDur":"0.7","skipSize":"33","skipFont":"Galmuri9","skipDot":"71","homeCx":"845","homeCy":"430.5","homeW":"354","tLight":"0.75","fBlur":"11","rgbAmt":"69","fLen":"32","fCore":"3","fGlow":"14","fGlowAmt":"38","fCount":"3","fFlick":"60","fTint":"-35","zoomStart":"1.2","frost":"6","reflAmt":"400","streakAmt":"100","dome":"8","mouse":"combo","ripple":true,"rippleDots":true,"pressBg":"80","pressDots":"15","curve":"pull","tScreen":"0.6","tPower":"0.25","tWait":"0.4","tFrost":"2.35","tHold":"0.45","tMove":"0.9","tPx":"0.75","tBloom":"56","tWarp":"12","pRecede":"2","pMerge":"55","tAmb":"25","pCurve":"soft","silAmt":"100","pBar":"20","pZoom2":"3","dotGap":"8.25","dotSize":"64","pressLag":"0","pressLife":"1.6","roomAmt":"15","roomBlur":"3.5","typeAccel":"1","typeBeat":"0.08","typeHome":"0.15","homeDur":"1.6","homeSway":true,"homeSwayAmt":"0.4","homeSwaySpd":"6","htGap":"195","htFont":"MonoB12","htSize":"58","htBright":"85","htGlow":"45","htMorph":"scatter","htBack":"rev"};
+  const DEFAULTS = {"bandAmt":"15","camFollowX":false,"camFollowY":false,"typeBase":"20","typeMode":"sec","typeSecDur":"0.5","typeBody":"400","typeStart":"2.4","typeStartDur":"0.7","skipSize":"33","skipFont":"Galmuri9","skipDot":"71","homeCx":"845","homeCy":"430.5","homeW":"354","tLight":"0.75","fBlur":"11","rgbAmt":"69","fLen":"32","fCore":"3","fGlow":"14","fGlowAmt":"38","fCount":"3","fFlick":"60","fTint":"-35","zoomStart":"1.2","frost":"6","reflAmt":"400","streakAmt":"100","dome":"8","mouse":"combo","ripple":true,"rippleDots":true,"pressBg":"80","pressDots":"15","curve":"pull","tScreen":"0.6","tPower":"0.25","tWait":"0.4","tFrost":"2.35","tHold":"0.45","tMove":"0.9","tPx":"0.75","tBloom":"56","tWarp":"12","pRecede":"2","pMerge":"55","tAmb":"25","pCurve":"soft","silAmt":"100","pBar":"20","pZoom2":"3","dotGap":"8.25","dotSize":"64","pressLag":"0","pressLife":"1.6","roomAmt":"15","roomBlur":"3.5","typeAccel":"1","typeBeat":"0.08","typeHome":"0.15","homeDur":"1.6","homeSway":true,"homeSwayAmt":"0.4","homeSwaySpd":"6","htGap":"195","htFont":"MonoB12","htSize":"58","htBright":"85","htGlow":"45","htMorph":"random","htBack":"random"};
   for (const [id, v] of Object.entries(DEFAULTS)) { const el = document.getElementById(id); if (!el) continue;
     if (el.type === 'checkbox') { el.checked = el.defaultChecked = !!v; }
     else if (el.tagName === 'SELECT') { for (const o of el.options) o.defaultSelected = o.value === v; el.value = v; }
@@ -2676,7 +2676,9 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
   function buildFly() {
     const k = htSet().font, shapes = [[], [], []]; for (const d of dots) shapes[d.g].push(d);
     FLYP = { logo: shapes.map((L, g) => { L.sort((a, b) => a.u - b.u || a.v - b.v); return pairUp(L, wordGrid(CATS[g].label, k).pts.length); }),
-      menu: pairUp(textDots.slice().sort((a, b) => a.x - b.x || a.y - b.y).map(d => bulge(d.x, d.y)), wordGrid('MENU', k).pts.length) };
+      menu: pairUp(textDots.slice().sort((a, b) => a.x - b.x || a.y - b.y).map(d => bulge(d.x, d.y)), wordGrid('MENU', k).pts.length),
+      // "random": the four ways shuffled each time HOME opens, so 3D · 2D · ETC · MENU each get a different one
+      modes: (() => { const m = ['scan', 'rain', 'swirl', 'line']; for (let i = m.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [m[i], m[j]] = [m[j], m[i]]; } return m; })() };
   }
   const flyGlow = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'), g = x.createRadialGradient(16, 16, 1, 16, 16, 16);
     g.addColorStop(0, 'rgba(200,220,255,1)'); g.addColorStop(1, 'rgba(200,220,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return c; })();
@@ -2750,17 +2752,48 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
         const c0 = hash(Math.round(x * 3.1), seed) * 0.45, k = clamp01((q - c0) / 0.5);
         if (k > 0.85 && hash(i, tick) > 0.4) return;
         out([x, y + k * k * (box.y1 - wb.y0 + (wb.y1 - wb.y0)) * 1.3]);
-      } else {                                         // scanOff: rubbed out a line at a time from the top
-        const r = clamp01((y - wb.y0) / Math.max(1e-6, wb.y1 - wb.y0)), k = q * 1.25 - r * 0.6;
-        if (k > 0.25) return; if (k > 0 && hash(i, tick) > 0.5) return;
-        out([x, y], k > 0 ? 1.6 : 1);
+      } else {                                         // scanOff: a scan line runs down the word and rubs it out behind it, a bright row on the line
+        const yS = wb.y0 + (wb.y1 - wb.y0 + grid.g * 2) * clamp01(q / 0.8) - grid.g;
+        if (y < yS - grid.g * 0.5) return;
+        out([x, y], y < yS + grid.g * 1.5 ? 1.8 : 1);
       }
     });
+  }
+  // the page TV going back to the menu: the MENU word goes and the menu (the three shapes and their names) is written back,
+  // as dots like the page's own, until the page takes over (homeHideMenu). scanOff: one scan line runs down the screen,
+  // MENU is rubbed out above it and the menu appears above it. drain: MENU pours out of the bottom, then the menu fills in
+  // like falling code, a column at a time, each column's head dropping and leaving the menu's dots lit behind it
+  function pageBack(mode, menuPts, q, tick, st, dS, ks, toS, dot, SZ) {
+    const g = DOT_GAP * ks, a0 = toS([0, 0]), b0 = toS([W, H]), top = a0[1], bot = b0[1], snapY = y => a0[1] + Math.round((y - a0[1]) / g) * g;
+    const tgt = [];
+    for (const d of dots) { const [hx, hy] = LH.at(d.g), S = LV.size; const P = toS(bulge(hx + d.u * S, hy + d.v * S)); tgt.push([P[0], P[1], SZ * ks]); }
+    for (const d of textDots) { const P = toS(bulge(d.x, d.y)); tgt.push([P[0], P[1], SZ * ks * 0.75]); }
+    const B = st.bright;
+    if (mode === 'scanOff') {
+      const yS = snapY(top + (bot - top) * clamp01(q / 0.8)), band = g * 1.5;
+      for (const [x, y] of menuPts) if (y > yS + band) dot(x, y, dS, B); else if (y > yS - g * 0.5) dot(x, y, dS, Math.min(1, B * 1.8));
+      for (const [x, y, s] of tgt) if (y < yS) dot(x, y, s, Math.min(1, B * (y > yS - band * 2 ? 1.8 : 1)));
+      if (q < 0.8) for (let x = a0[0] + g; x < b0[0]; x += g * 2) dot(x, yS, SZ * ks * 0.5, 0.25);   // the line itself, faint
+      return;
+    }
+    // drain: MENU pours out first (columns letting go one after another)
+    const mb = boxOf(menuPts), qm = clamp01(q * 1.8);
+    menuPts.forEach(([x, y], i) => { const c = hash(Math.round(x * 3.1), 5) * 0.45, k = clamp01((qm - c) / 0.5); if (k >= 1 || (k > 0.85 && hash(i, tick) > 0.4)) return;
+      dot(x, snapY(y + k * k * (bot - mb.y0) * 1.3), dS, B); });
+    // then the menu fills in column by column
+    const cols = new Map();
+    for (const t of tgt) { const c = Math.round(t[0] / g); (cols.get(c) || cols.set(c, []).get(c)).push(t); }
+    for (const [c, list] of cols) {
+      const start = 0.1 + hash(c, 21) * 0.3, prog = clamp01((q - start) / 0.4), head = snapY(top + (bot - top) * 1.05 * prog);
+      if (prog <= 0) continue;
+      for (const [x, y, s] of list) if (y <= head) dot(x, y, s, Math.min(1, B * (head - y < g * 3 && prog < 1 ? 1.8 : 1)));
+      if (prog < 1) { const x = list[0][0]; for (let k = 0; k < 4; k++) { const y = head - k * g; if (y > top) dot(x, y, SZ * ks * 0.8, B * (1 - k * 0.25) * (hash(c, tick + k) > 0.2 ? 1 : 0.4)); } }
+    }
   }
   function drawHomeFly(Y, c0, T) {
     const dt = Math.min(0.25, Math.max(0, T - flyLast)); flyLast = T;   // slow frames still keep time
     if (HOME.dir > 0 && !HOME.wait) { if (!HOME.flyP || !FLYP) buildFly(); HOME.flyP = Math.min(FLY.END, HOME.flyP + dt); }   // from the moment the camera starts to pull back
-    const backMode = HOME.dir < 0 ? document.getElementById('htBack').value : 'rev';
+    const backMode = HOME.dir < 0 ? (HOME.backMode || 'rev') : 'rev';
     const backQ = HOME.dir < 0 ? clamp01((T - HOME.t0) / (homeDur() * 0.7 * 0.8)) : 0;   // other ways back: done a little before the zoom in ends
     if (HOME.dir < 0 && backMode === 'rev') HOME.flyP = Math.max(0, HOME.flyP - dt * 2);
     const p = HOME.flyP; homeHideMenu = p > 0 && !(backMode !== 'rev' && backQ >= 0.85);
@@ -2795,7 +2828,8 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     if (backMode !== 'rev' && HOME.dir < 0) {          // going back without rewinding: each word goes off its own way, then the page's menu is back
       words.forEach((wd, g) => { if (!wd) return; const tl = setScreenPt(wd.t, 30, 30), bl = setScreenPt(wd.t, 290, 210);
         wordOff(backMode, wd.pts, clamp01(backQ * 1.15 - g * 0.05), boxOf(wd.pts), { x0: tl[0], y0: tl[1], x1: bl[0], y1: bl[1] }, { g: pitch, ox: 0, oy: 0 }, tick, 11 + g * 7, (x, y, a, k) => dot(x, y, dS * k, Math.min(1, st.bright * a))); });
-      wordOff(backMode, menuPts, backQ, boxOf(menuPts), mBox, { g: pitch, ox: 0, oy: 0 }, tick, 5, (x, y, a, k) => dot(x, y, dS * k, Math.min(1, st.bright * a)));
+      if (backMode === 'scanOff' || backMode === 'drain') pageBack(backMode, menuPts, backQ, tick, st, dS, ks, toS, dot, SZ);
+      else wordOff(backMode, menuPts, backQ, boxOf(menuPts), mBox, { g: pitch, ox: 0, oy: 0 }, tick, 5, (x, y, a, k) => dot(x, y, dS * k, Math.min(1, st.bright * a)));
       Y.restore(); return;
     }
     FLYP.logo.forEach((parts, g) => {
@@ -2818,7 +2852,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
         let s = SZ * ks * sc, a = st.bright;
         const rr = clamp01((tau - FLY.GO - pr.r * 0.25) / (FLY.RE - 0.25));
         if (rr > 0) {                                  // over the set's screen the dots rearrange into its name, in hops too (way set in ⑤ HOME)
-          const P = morph(st.morph, [x, y], to, rr, pr, wBox, wB, { g: pitch, ox: 0, oy: 0 }, tick, 97); if (!P) continue;
+          const P = morph(st.morph === 'random' ? FLYP.modes[g] : st.morph, [x, y], to, rr, pr, wBox, wB, { g: pitch, ox: 0, oy: 0 }, tick, 97); if (!P) continue;
           [x, y] = P; s += (dS - s) * clamp01(rr * 1.5);
         }
         dot(x, y, s, a);
@@ -2828,7 +2862,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     if (p >= FLY.MENU0 + FLY.MENU) { for (const [x, y] of tear(menuPts, hot)) dot(x, y, dS * LM.s, LM.a, LM.g); }
     else for (const pr of FLYP.menu) {
       const raw = clamp01((pq - FLY.MENU0 - pr.r * 0.3) / (FLY.MENU - 0.3)), a = toS(pr.s), b = menuPts[Math.floor(pr.f * menuPts.length)];
-      const P = morph(st.morph, a, b, raw, pr, mBox, mWB, mGrid, tick, 53); if (!P) continue;
+      const P = morph(st.morph === 'random' ? FLYP.modes[3] : st.morph, a, b, raw, pr, mBox, mWB, mGrid, tick, 53); if (!P) continue;
       const [x, y] = P;
       dot(x, y, raw >= 1 ? dS : SZ * ks * 0.7 + (dS - SZ * ks * 0.7) * raw, st.bright);
     }
@@ -2906,7 +2940,11 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     MODE = 'home'; stage.classList.add('homing'); document.activeElement?.blur?.();
     for (const c of [cTV, cTF]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
   }
-  function leaveHome() { if (!HOME.active || HOME.dir < 0) return; setHomeEdit(false); HOME.dir = -1; HOME.t0 = performance.now() / 1000; HOME.u0 = HOME.u; }
+  // the way back is picked as HOME is left: "random" starts with pouring out, then any of scan · rewind · pour
+  let backCount = 0;
+  function pickBack() { const v = document.getElementById('htBack').value; if (v !== 'random') return v;
+    return backCount++ === 0 ? 'drain' : ['scanOff', 'rev', 'drain'][Math.floor(Math.random() * 3)]; }
+  function leaveHome() { if (!HOME.active || HOME.dir < 0) return; setHomeEdit(false); HOME.backMode = pickBack(); HOME.dir = -1; HOME.t0 = performance.now() / 1000; HOME.u0 = HOME.u; }
   function stepHome(T) {
     if (!HOME.active) return;
     if (HOME.wait) { if (tvsReady() || T - HOME.wait > 4) HOME.wait = 0; HOME.t0 = T; }
