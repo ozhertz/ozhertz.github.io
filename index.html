@@ -199,7 +199,7 @@ h1 { margin: 2px 0 0; font-size: clamp(18px, 2.4vw, 22px); font-weight: 600; let
 @media (pointer: coarse) and (orientation: portrait) { .rotateHint { display: flex; } }
 .fs.dotted svg { opacity: 0; }   /* on the menu the icon is drawn on the screen as dots (buildText), the button is only its hit area */
 .fs.dotted { opacity: 1; }
-.fs.placed:not(.dotted) { opacity: 0; pointer-events: none; }   /* placed on the screen but its dots are not lit (opening, other pages): hidden and inert */
+.fs:not(.dotted) { opacity: 0; pointer-events: none; }   /* shown only while its dots are lit on the menu screen: hidden and inert before (the page just opened, the opening) and on the other pages */
 .fs.dotted:focus-visible { outline: 1px solid rgba(207,224,255,.6); outline-offset: 2px; }
 @media (pointer: coarse) { .fs::before { inset: -14px; } .term-back::before { inset: -26px -40px -26px -40px; } }   /* fingers: bigger hit areas
 
