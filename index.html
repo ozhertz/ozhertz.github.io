@@ -198,7 +198,8 @@ h1 { margin: 2px 0 0; font-size: clamp(18px, 2.4vw, 22px); font-weight: 600; let
 .rotateHint:focus-visible { outline: 1px solid rgba(207,224,255,.6); outline-offset: 2px; }
 .rotateHint svg { color: #cfe0ff; filter: drop-shadow(0 0 3px rgba(200,220,255,.6)); }
 @media (pointer: coarse) and (orientation: portrait) { .rotateHint { display: flex; } }
-.fs.dotted svg { opacity: 0; }   /* on the menu the icon is drawn on the screen as dots (buildText), the button is only its hit area */
+.fs.dotted svg, .fs.placed svg { display: none; }   /* once on the screen the icon is only ever the drawn dots: the SVG (stretched to the big hit area) must never show, not even while the button fades */
+.fs.placed { transition: none; }   /* on the menu the icon is drawn on the screen as dots (buildText), the button is only its hit area */
 .fs.dotted { opacity: 1; }
 .fs:not(.dotted) { opacity: 0; pointer-events: none; }   /* shown only while its dots are lit on the menu screen: hidden and inert before (the page just opened, the opening) and on the other pages */
 .fs.dotted:focus-visible { outline: 1px solid rgba(207,224,255,.6); outline-offset: 2px; }
