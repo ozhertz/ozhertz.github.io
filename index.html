@@ -1143,7 +1143,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;min-height:10
     // the fullscreen icon: comes on with the logo (dot by dot, quietly, no sputter), lives only on the main screen and
     // goes off in a few digital steps (dots dropping out) when HOME, PROFILE or THE END is opened
     { const want = MODE === 'menu' && !floodP && !HOME.active && !homeHideMenu ? 1 : 0, dtv = Math.min(0.1, Math.max(0, T - fsT)); fsT = T;
-      fsVis = want ? Math.min(1, fsVis + dtv / 0.25) : floodP ? 0 : Math.max(0, fsVis - dtv / 0.35);   // PROFILE's white flood swallows it at once (was: at 1 it stepped back down every other frame, a flicker)
+      fsVis = want ? Math.min(1, fsVis + dtv / 0.25) : (floodP || MODE === 'toProfile' || MODE === 'profile') ? 0 : Math.max(0, fsVis - dtv / 0.35);   // PROFILE zooms the picture in at once: the icon goes at once too, or it grows with the zoom   // PROFILE's white flood swallows it at once (was: at 1 it stepped back down every other frame, a flicker)
       const vis = Math.round(fsVis * 4) / 4;
       if (vis > 0) for (const d of textDots) {
         if (!d.fs) continue;
